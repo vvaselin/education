@@ -1,119 +1,85 @@
-import React, { useState } from 'react'
-import Head from 'next/head'
-import { Box, Button, Flex, Image, Text, useBreakpointValue } from '@chakra-ui/react'
+import React, { useState } from 'react';
+import Head from 'next/head';
+import { Box, Flex, Image, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb, useBreakpointValue } from '@chakra-ui/react';
 
 const dialogues = [
   { speaker: 'beginner', text: 'ここってどうやるの？' },
   { speaker: 'expert', text: 'こうやるといいよ！' },
   { speaker: 'beginner', text: 'なるほど、ありがとう！' },
   { speaker: 'expert', text: 'いつでも聞いてね！' },
-]
+];
 
 export default function HomePage() {
-  const [index, setIndex] = useState(0)
-  const currentDialogue = dialogues[index]
+  const [index, setIndex] = useState(0);
+  const currentDialogue = dialogues[index];
 
-  // 画面サイズによって画像サイズを変える
-  const imageSize = useBreakpointValue({ base: '150px', md: '200px' })
-  const fontSize = useBreakpointValue({ base: 'md', md: 'xl' })
-
-  const nextDialogue = () => {
-    setIndex((prev) => (prev + 1) % dialogues.length)
-  }
+  const imageSize = useBreakpointValue({ base: '70px', md: '100px' });
+  const fontSize = useBreakpointValue({ base: 'sm', md: 'lg' });
 
   return (
-    <React.Fragment>
+    <>
       <Head>
-        <title>EduApp - セリフ切り替え</title>
+        <title>EduApp - スライダーでセリフ切り替え</title>
       </Head>
 
-      <Flex direction="column" minHeight="100vh" bg="gray.300">
-        
+      <Flex direction="column" minHeight="100vh" bg="gray.400" justify="center" align="center" textAlign="center" px={4}>
+
         {/* キャラクターたち */}
-        <Flex flex="3" p={4}>
-          {/* 初心者キャラ */}
-          <Flex flex="1" direction="column" align="center" justify="center" m={2} rounded="md" position="relative">
-            <Image
-              src="/images/beginner.png"
-              alt="初心者キャラ"
-              boxSize={imageSize}
-              objectFit="contain"
-              mb={4}
-            />
-            <Text fontWeight="bold">初心者</Text>
-
-            {currentDialogue.speaker === 'beginner' && (
-              <Box 
-                bg="white" 
-                p={3} 
-                rounded="md" 
-                shadow="md"
-                position="absolute" 
-                top="-10px"
-                left="60%"
-                transform="translateX(-70%)"
-                _after={{
-                  content: "''",
-                  position: 'absolute',
-                  bottom: '-30px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  borderWidth: '15px',
-                  borderStyle: 'solid',
-                  borderColor: 'white transparent transparent transparent',
-                }}
-              >
-                <Text fontSize={fontSize}>{currentDialogue.text}</Text>
-              </Box>
-            )}
+        <Flex w="100%" maxW="400px" justify="space-around" align="center" mb={2}>
+          <Flex direction="column" align="center">
+            <Image src="/images/beginner.png" alt="初心者キャラ" boxSize={imageSize} objectFit="contain" />
+            <Text mt={1} fontWeight="bold" fontSize="xs">初心者</Text>
           </Flex>
-
-          {/* 熟練者キャラ */}
-          <Flex flex="1" direction="column" align="center" justify="center" m={2} rounded="md" position="relative">
-            <Image
-              src="/images/expert.png"
-              alt="熟練者キャラ"
-              boxSize={imageSize}
-              objectFit="contain"
-              mb={4}
-            />
-            <Text fontWeight="bold">熟練者</Text>
-
-            {currentDialogue.speaker === 'expert' && (
-              <Box 
-                bg="white" 
-                p={3} 
-                rounded="md" 
-                shadow="md"
-                position="absolute" 
-                top="-10px"
-                left="40%"
-                transform="translateX(-30%)"
-                _after={{
-                  content: "''",
-                  position: 'absolute',
-                  bottom: '-30px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  borderWidth: '15px',
-                  borderStyle: 'solid',
-                  borderColor: 'white transparent transparent transparent',
-                }}
-              >
-                <Text fontSize={fontSize}>{currentDialogue.text}</Text>
-              </Box>
-            )}
+          <Flex direction="column" align="center">
+            <Image src="/images/expert.png" alt="熟練者キャラ" boxSize={imageSize} objectFit="contain" />
+            <Text mt={1} fontWeight="bold" fontSize="xs">熟練者</Text>
           </Flex>
         </Flex>
 
-        {/* 次へボタン */}
-        <Flex flex="1" p={1} align="center" justify="center">
-          <Button colorScheme="teal" size="lg" onClick={nextDialogue}>
-            次へ
-          </Button>
-        </Flex>
+        {/* 吹き出し */}
+        <Box
+          position="relative"
+          bg="white"
+          p={6}
+          rounded="lg"
+          shadow="xl"
+          minW="400px"
+          maxW="80%"
+          mt={4}
+          _before={{
+            content: "''",
+            position: 'absolute',
+            bottom: '100%', // 上向き
+            left: currentDialogue.speaker === 'beginner' ? '25%' : '75%',
+            transform: 'translateX(-50%)',
+            borderLeft: '10px solid transparent',
+            borderRight: '10px solid transparent',
+            borderBottom: '10px solid white',
+          }}
+        >
+          <Text fontSize={fontSize} fontWeight="bold">
+            {currentDialogue.text}
+          </Text>
+        </Box>
+
+        {/* スライダー */}
+        <Box w="30%" mt={10}>
+          <Slider
+            aria-label="セリフスライダー"
+            min={0}
+            max={dialogues.length - 1}
+            step={1}
+            value={index}
+            onChange={(val) => setIndex(val)}
+          >
+            <SliderTrack bg="teal.100">
+              <SliderFilledTrack bg="teal.400" />
+            </SliderTrack>
+            <SliderThumb boxSize={6} />
+          </Slider>
+        </Box>
 
       </Flex>
-    </React.Fragment>
-  )
+    </>
+  );
 }
