@@ -13,8 +13,8 @@ export default function HomePage() {
   const [index, setIndex] = useState(0);
   const currentDialogue = dialogues[index];
 
-  const imageSize = useBreakpointValue({ base: '70px', md: '100px' });
-  const fontSize = useBreakpointValue({ base: 'sm', md: 'lg' });
+  const imageSize = useBreakpointValue({ base: '120px', md: '170px' });
+  const fontSize = useBreakpointValue({ base: 'md', md: '2xl' });
 
   return (
     <>
@@ -63,7 +63,10 @@ export default function HomePage() {
         </Box>
 
         {/* スライダー */}
-        <Box w="30%" mt={10}>
+        <Box 
+          minW="400px"
+          maxW="80%" 
+          mt={10}>
           <Slider
             aria-label="セリフスライダー"
             min={0}
@@ -72,10 +75,10 @@ export default function HomePage() {
             value={index}
             onChange={(val) => setIndex(val)}
           >
-            <SliderTrack bg="teal.100">
+            <SliderTrack bg="teal.100" h="8px">
               <SliderFilledTrack bg="teal.400" />
             </SliderTrack>
-            <SliderThumb boxSize={6} />
+            <SliderThumb boxSize={4} />
           </Slider>
         </Box>
 
