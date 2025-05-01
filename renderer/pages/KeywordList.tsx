@@ -28,34 +28,64 @@ export default function KeywordList() {
   };
 
   return (
-    <Box p={6} bg="gray.100" rounded="md">
-      <Text fontSize="xl" fontWeight="bold" mb={2}>キーワードを入力</Text>
+    <Box
+      p={3}
+      bg="gray.100"
+      rounded="md"
+      height="100%"
+      display="flex"
+      flexDirection="column"
+    >
+      {/* 入力エリア */}
+      <Box mb={3}>
+        <Text fontSize="lg" fontWeight="bold" mb={2}>キーワード</Text>
+        <HStack>
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addKeyword();
+              }
+            }}
+            placeholder="ボタン/Enter"
+            size="sm"
+          />
+          <Button onClick={addKeyword} colorScheme="teal" size="sm">
+            追加
+          </Button>
+        </HStack>
+      </Box>
 
-      <HStack mb={4}>
-        <Input
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              addKeyword();
-            }
-          }}
-          placeholder="ボタンかEnterキー"
-        />
-        <Button onClick={addKeyword} colorScheme="teal">
-          追加
-        </Button>
-      </HStack>
-
-      <VStack align="start" spacing={2}>
-        {keywords.map((keyword, index) => (
-          <Tag key={index} size="lg" colorScheme="teal" borderRadius="full">
-            <TagLabel>{keyword}</TagLabel>
-            <TagCloseButton onClick={() => removeKeyword(keyword)} />
-          </Tag>
-        ))}
-      </VStack>
+      {/* キーワード一覧（スクロール領域） */}
+      <Box
+        overflowY="auto"
+        flex="1"
+        pr={1}
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '8px',
+            background: '#f1f1f1',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#cbd5e0',
+            borderRadius: '24px',
+          },
+        }}
+      >
+        <VStack align="start" spacing={2}>
+          {keywords.map((keyword, index) => (
+            <Tag key={index} size="md" colorScheme="teal" borderRadius="full">
+              <TagLabel>{keyword}</TagLabel>
+              <TagCloseButton onClick={() => removeKeyword(keyword)} />
+            </Tag>
+          ))}
+        </VStack>
+      </Box>
     </Box>
   );
 }
