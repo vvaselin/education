@@ -111,6 +111,8 @@ export default function HomePage() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const initialModalRef = useRef(null);
+
   return (
     <>
       <Head>
@@ -333,13 +335,18 @@ export default function HomePage() {
       </Box>
 
       {/* ゲームのモーダル */}
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        isCentered 
+        size="xl"
+        initialFocusRef={initialModalRef}
+      >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent ref={initialModalRef}>
           <ModalHeader>Phaser ゲーム</ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6}>
-            {/* ここにゲームコンポーネントを召喚！ */}
+          <ModalBody p={2}>
             <PhaserGame />
           </ModalBody>
         </ModalContent>
