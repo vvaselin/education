@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import KeywordList from './KeywordList';
@@ -21,9 +22,21 @@ import {
   MenuItem,
   MenuDivider,
   Spacer,
-  HStack
+  HStack,
+  useDisclosure, 
+  Modal,         
+  ModalOverlay,  
+  ModalContent,  
+  ModalHeader,   
+  ModalBody,     
+  ModalCloseButton, 
 } from '@chakra-ui/react';
 import { AddIcon, ChevronDownIcon } from '@chakra-ui/icons';
+
+const PhaserGame = dynamic(() => import('../components/PhaserGame'), {
+  ssr: false, // これが「サーバーでは読み込まないでね」っていうおまじない！
+  loading: () => <p>ゲームを読み込み中...</p> // ローディング表示もできるよ
+});
 
 // キーワードごとに解説データを管理
 const tabData = [
@@ -95,6 +108,8 @@ export default function HomePage() {
     const bubbleAdjustment = Math.max(0, bubbleHeight - 60) * 1.0;
     return `${basePosition - bubbleAdjustment}px`;
   };
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <>
@@ -175,6 +190,11 @@ export default function HomePage() {
               </Menu>
               </Flex>
             </Box>
+
+            {/* Phaserゲームコンポーネント */}
+            <Button colorScheme="orange" onClick={onOpen} mb={2}>
+              ゲームで遊ぶ！
+            </Button>
 
             {/* コンテンツ表示エリア */}
             {tabData.map((tab, tabIndex) => (
@@ -311,6 +331,19 @@ export default function HomePage() {
           </Box>
         </Flex>
       </Box>
+
+      {/* ゲームのモーダル */}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Phaser ゲーム</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {/* ここにゲームコンポーネントを召喚！ */}
+            <PhaserGame />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
