@@ -124,15 +124,15 @@ export default function HomePage() {
             padding: 0;
           }
           #__next {
-            width: 896px;
-            height: 504px;
+            width: 1024px;
+            height: 576px;
             margin: 0 auto;
             overflow: hidden;
           }
         `}</style>
       </Head>
       
-      <Box width="896px" height="504px" margin="0 auto" overflow="hidden">
+      <Box width="1024px" height="576px" margin="0 auto" overflow="hidden">
         <Flex direction="row" height="100%" width="100%">
           {/* 左側（解説画面） */}
           <Box
@@ -193,10 +193,7 @@ export default function HomePage() {
               </Flex>
             </Box>
 
-            {/* Phaserゲームコンポーネント */}
-            <Button colorScheme="orange" onClick={onOpen} mb={2}>
-              ゲームで遊ぶ！
-            </Button>
+            
 
             {/* コンテンツ表示エリア */}
             {tabData.map((tab, tabIndex) => (
@@ -328,8 +325,18 @@ export default function HomePage() {
           </Box>
 
           {/* 右側（メモ帳） */}
-          <Box flex="1" bg="white" p={4} height="100%">
+          <Box 
+            flex="1" 
+            bg="white" 
+            p={4} 
+            height="80%"
+            flexDirection="column"
+            >
             <KeywordList />
+            {/* Phaserゲームコンポーネント */}
+            <Button colorScheme="orange" onClick={onOpen} mb={2}>
+              ゲームで遊ぶ！
+            </Button>
           </Box>
         </Flex>
       </Box>
