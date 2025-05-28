@@ -12,6 +12,7 @@
     "dist": "yarn build && electron-builder"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "electron-serve": "^1.3.0",
     "electron-store": "^8.2.0",
     "phaser": "^3.90.0"
