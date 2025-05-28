@@ -32,6 +32,7 @@ import {
   ModalCloseButton, 
 } from '@chakra-ui/react';
 import { AddIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import DiscordChat from './DiscordChat';
 
 const PhaserGame = dynamic(() => import('../components/PhaserGame'), {
   ssr: false, // これが「サーバーでは読み込まないでね」っていうおまじない！
@@ -326,13 +327,14 @@ export default function HomePage() {
 
           {/* 右側（メモ帳） */}
           <Box 
-            flex="1" 
+            flex="2" 
             bg="white" 
             p={4} 
-            height="80%"
+            height="90%"
             flexDirection="column"
             >
-            <KeywordList />
+            {/*<KeywordList />*/}
+            <DiscordChat />
             {/* Phaserゲームコンポーネント */}
             <Button colorScheme="orange" onClick={onOpen} mb={2}>
               ゲームで遊ぶ！
