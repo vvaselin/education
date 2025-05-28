@@ -111,7 +111,7 @@ export default function CodeEditorDisplay({
   return (
     <Box flex="3.5" height="100%" display="flex" flexDirection="column" bg="gray.800" minWidth="0">
       <Editor
-        height="calc(100% - 120px)"
+        height="70%"
         language={language}
         theme="vs-dark"
         value={code}
@@ -119,7 +119,7 @@ export default function CodeEditorDisplay({
         options={{
           selectOnLineNumbers: true,
           minimap: { enabled: true },
-          fontSize: 14,
+          fontSize: 18,
           wordWrap: 'on',
         }}
       />
@@ -135,7 +135,7 @@ export default function CodeEditorDisplay({
         </Button>
         <Box
           width="100%"
-          height="80px"
+          height="100%"
           bg="gray.900"
           p={2}
           rounded="md"

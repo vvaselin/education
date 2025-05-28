@@ -1,18 +1,13 @@
 import dynamic from 'next/dynamic';
 import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
-// import KeywordList from './KeywordList';
 import DiscordChat from './DiscordChat';
-// import DialogueDisplay from './DialogueDisplay'; 
 import CodeEditorDisplay from './CodeEditorDisplay';
 
 import { 
   Box, 
   Flex, 
-  // Image, Text, Slider, SliderTrack, SliderFilledTrack, SliderThumb, useBreakpointValue,
-  // Select, Badge, IconButton, Button, Menu, MenuButton, MenuList, MenuItem, MenuDivider,
-  // Spacer, HStack, // これらはDialogueDisplayが使う
-  Button, // PhaserGameのボタン用に残す
+  Button, 
   useDisclosure, 
   Modal,
   ModalOverlay,
@@ -21,7 +16,6 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react';
-// import { AddIcon, ChevronDownIcon } from '@chakra-ui/icons'; // DialogueDisplayが使う
 
 
 const PhaserGame = dynamic(() => import('../components/PhaserGame'), {
@@ -29,55 +23,7 @@ const PhaserGame = dynamic(() => import('../components/PhaserGame'), {
   loading: () => <p>ゲームを読み込み中...</p>
 });
 
-{ /*  
-const tabData = [
- {
-    keyword: "基本操作",
-    dialogues: [
-      { speaker: 'beginner', text: 'ここってどうやるの？' },
-      { speaker: 'expert', text: 'こうやるのじゃ！' },
-      { speaker: 'beginner', text: 'なるほど、ありがとう！' },
-      { speaker: 'expert', text: 'いつでも聞くんじゃぞ！' },
-    ]
-  },
-  {
-    keyword: "応用テクニック",
-    dialogues: [
-      { speaker: 'beginner', text: '応用的な使い方を教えて！' },
-      { speaker: 'expert', text: 'まずはこのボタンを押してみるのじゃ' },
-      { speaker: 'beginner', text: 'わかった！それで次は？' },
-      { speaker: 'expert', text: '次にこの機能を使うと効率的は' },
-    ]
-  },
-  {
-    keyword: "トラブルシューティング",
-    dialogues: [
-      { speaker: 'beginner', text: 'エラーが出ちゃった...' },
-      { speaker: 'expert', text: 'よくあるケースじゃの。こちらを確認してみるのじゃ' },
-      { speaker: 'beginner', text: '確認したら直ったよ！' },
-      { speaker: 'expert', text: '素晴らしい！次からは自分で解決できるのう' },
-    ]
-  } 
-];
-*/}
-
 export default function HomePage() {
-  // ★DialogueDisplay
-  { /*  
-  const [activeTab, setActiveTab] = useState(0);
-  const [dialogueIndexes, setDialogueIndexes] = useState(tabData.map(() => 0));
-
-  // 特定タブのダイアログインデックスを更新
-  const updateDialogueIndex = (tabIndex: number, newDialogueIndex: number) => {
-    const newIndexes = [...dialogueIndexes];
-    newIndexes[tabIndex] = newDialogueIndex;
-    setDialogueIndexes(newIndexes);
-  };
-
-  const handleAddNewTopic = () => {
-    alert('この機能はまだ実装中です。メモから新しいタブを生成します。');
-  };
-  */}
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const initialModalRef = useRef(null);
