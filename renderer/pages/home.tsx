@@ -84,24 +84,30 @@ export default function HomePage() {
 
   return (
     <>
-       <Head>
+      <Head>
         <title>EduApp</title>
         <style jsx global>{`
-          html, body {
+          html, body, #__next {
+            width: 100%;      
+            height: 100%;
             overflow: hidden;
-            margin: 0;
-            padding: 0;
-          }
-          #__next {
-            width: 1280px;
-            height: 720px;
             margin: 0 auto;
-            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
           }
         `}</style>
       </Head> 
       
-      <Box width="1280px" height="720px" margin="0 auto" overflow="hidden">
+      <Box 
+        width="1279px" 
+        height="719px" 
+        overflow="hidden"
+        bg="gray.600"
+        p={3}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+      >
         <Flex direction="row" height="100%" width="100%">
           {/* 左側（コードエディタ） */}
           <CodeEditorDisplay language="cpp" />
@@ -109,12 +115,12 @@ export default function HomePage() {
           {/* 右側（チャット画面） */}
           <Box 
             flex="2" 
-            bg="gray.800" // チャット画面の背景色に合わせてみる
-            p={0}
+            p={2}
             height="100%"
             display="flex"
             flexDirection="column"
             minWidth="0"
+            overflow="hidden"
           >
             <DiscordChat />
             <Button colorScheme="orange" onClick={onOpen}>

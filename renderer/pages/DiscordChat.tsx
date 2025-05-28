@@ -59,7 +59,14 @@ export default function DiscordChat() {
   };
 
   return (
-    <Flex direction="column" height="100%" bg="gray.700" color="white" rounded="md">
+    <Flex 
+      direction="column" 
+      flex="1"
+      minHeight="0"
+      bg="gray.700" 
+      color="white" 
+      rounded="md"  
+    >
         <HStack
             p={3} // 上下左右の余白を少し
             borderBottomWidth="1px" // 下に境界線

@@ -29,6 +29,7 @@ export default function CodeEditorDisplay({
       // エディタなので背景色は暗めがいいかも。Chakraのテーマに合わせてもOK
       bg="gray.800" // VS Codeのダークテーマっぽい色
       minWidth="0"
+      overflowY="auto"
     >
       <Editor
         height="100%" // 親のBoxいっぱいに広げる

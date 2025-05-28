@@ -135,7 +135,7 @@ class GameScene extends Phaser.Scene {
             enemy.refreshBody();
 
             const radius = enemy.displayWidth / 2;
-            const offsetX = 5; 
+            const offsetX = 60; 
             const offsetY = 0;
             enemy.body.setCircle(radius, offsetX, offsetY);
             
