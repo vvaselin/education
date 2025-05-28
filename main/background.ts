@@ -15,8 +15,8 @@ if (isProd) {
   await app.whenReady()
 
   const mainWindow = createWindow('main', {
-    width: 1024,
-    height: 576,
+    width: 1280,
+    height: 720,
     resizable: false,
     useContentSize: true,
     webPreferences: {

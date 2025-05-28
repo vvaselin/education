@@ -1,9 +1,10 @@
 import dynamic from 'next/dynamic';
-import React, { useState, useRef, useEffect } from 'react'; // useRef, useEffectはDialogueDisplayに移動したので不要になるかも
+import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
-// import KeywordList from './KeywordList'; // もう使わない
-import DiscordChat from './DiscordChat';   // これと
-import DialogueDisplay from './DialogueDisplay'; // ★これを使う！
+// import KeywordList from './KeywordList';
+import DiscordChat from './DiscordChat';
+// import DialogueDisplay from './DialogueDisplay'; 
+import CodeEditorDisplay from './CodeEditorDisplay';
 
 import { 
   Box, 
@@ -28,6 +29,7 @@ const PhaserGame = dynamic(() => import('../components/PhaserGame'), {
   loading: () => <p>ゲームを読み込み中...</p>
 });
 
+{ /*  
 const tabData = [
  {
     keyword: "基本操作",
@@ -57,9 +59,11 @@ const tabData = [
     ]
   } 
 ];
+*/}
 
 export default function HomePage() {
-  // ★DialogueDisplayで使うstateや関数は、基本的にここに残すか、ここで定義してPropsで渡す
+  // ★DialogueDisplay
+  { /*  
   const [activeTab, setActiveTab] = useState(0);
   const [dialogueIndexes, setDialogueIndexes] = useState(tabData.map(() => 0));
 
@@ -73,28 +77,34 @@ export default function HomePage() {
   const handleAddNewTopic = () => {
     alert('この機能はまだ実装中です。メモから新しいタブを生成します。');
   };
+  */}
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const initialModalRef = useRef(null);
 
   return (
     <>
-      <Head>
+       <Head>
         <title>EduApp</title>
-        {/* ... (style jsx global は変更なし) ... */}
-      </Head>
+        <style jsx global>{`
+          html, body {
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+          }
+          #__next {
+            width: 1280px;
+            height: 720px;
+            margin: 0 auto;
+            overflow: hidden;
+          }
+        `}</style>
+      </Head> 
       
-      <Box width="1024px" height="576px" margin="0 auto" overflow="hidden">
+      <Box width="1280px" height="720px" margin="0 auto" overflow="hidden">
         <Flex direction="row" height="100%" width="100%">
-          {/* 左側（解説画面） */}
-          <DialogueDisplay
-            tabData={tabData}
-            activeTab={activeTab}
-            dialogueIndexes={dialogueIndexes}
-            onTabChange={setActiveTab} // setActiveTabを直接渡す
-            onDialogueIndexChange={updateDialogueIndex}
-            onAddNewTopic={handleAddNewTopic}
-          />
+          {/* 左側（コードエディタ） */}
+          <CodeEditorDisplay language="cpp" />
 
           {/* 右側（チャット画面） */}
           <Box 
@@ -104,6 +114,7 @@ export default function HomePage() {
             height="100%"
             display="flex"
             flexDirection="column"
+            minWidth="0"
           >
             <DiscordChat />
             <Button colorScheme="orange" onClick={onOpen}>
