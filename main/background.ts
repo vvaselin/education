@@ -4,6 +4,7 @@ import serve from 'electron-serve'
 import { createWindow } from './helpers'
 import fs from 'fs';
 import { exec } from 'child_process';
+import http from 'http';
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -29,8 +30,47 @@ if (isProd) {
   if (isProd) {
     await mainWindow.loadURL('app://./home')
   } else {
-    const port = process.argv[2]
-    await mainWindow.loadURL(`http://localhost:${port}/home`)
+    const port = process.argv[2];
+    const url = `http://localhost:${port}/home`;
+
+    // サーバーが準備完了するまで待機する関数
+    const waitForServer = async () => {
+      for (let i = 0; i < 60; i++) { // 最大60秒待つ
+        try {
+          // Promiseを使ってhttp.getを非同期処理にする
+          await new Promise((resolve, reject) => {
+            http.get(url, (res) => {
+              // ステータスコードが200なら成功
+              if (res.statusCode === 200) {
+                resolve(res.statusCode);
+              } else {
+                reject(new Error(`サーバーエラー: ${res.statusCode}`));
+              }
+            }).on('error', (err) => reject(err));
+          });
+          // 成功したらループを抜ける
+          console.log('Next.js server is ready!');
+          return;
+        } catch (error) {
+          console.log('Next.js server not ready yet. Retrying in 1s...');
+          // 1秒待ってからリトライ
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      // タイムアウトした場合
+      throw new Error('Timed out waiting for Next.js server.');
+    };
+
+    try {
+      // サーバーの準備を待つ
+      await waitForServer();
+      // 準備ができたらURLを読み込む
+      await mainWindow.loadURL(url);
+    } catch (e) {
+      console.error(e);
+      // ここでエラーページをロードしたり、アプリを終了させたりすることも可能
+    }
+    // 開発ツールを開く
     mainWindow.webContents.openDevTools()
   }
 })()
@@ -44,6 +84,7 @@ ipcMain.on('message', async (event, arg) => {
 })
 
 ipcMain.handle('run-cpp-code', async (event, cppCode: string) => {
+  /*
   console.log('メインプロセス: C++コードを受け取ったよ！');
   const tempDir = path.join(app.getPath('temp'), 'cpp_executions');
   const cppFilePath = path.join(tempDir, `temp_code_${Date.now()}.cpp`);
@@ -106,4 +147,5 @@ ipcMain.handle('run-cpp-code', async (event, cppCode: string) => {
     if (fs.existsSync(exeFilePath)) fs.unlinkSync(exeFilePath);
     return { success: false, error: e.message };
   }
+  */
 });

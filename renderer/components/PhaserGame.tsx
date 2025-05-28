@@ -28,7 +28,7 @@ class GameScene extends Phaser.Scene {
         // 弾のテクスチャ生成
         const bulletGraphics = this.add.graphics();
         bulletGraphics.fillStyle(0xffffff, 1);
-        bulletGraphics.fillCircle(5, 5, 5);  // 半径5の円を描画
+        bulletGraphics.fillCircle(4, 4, 4); 
         bulletGraphics.generateTexture('bullet', 10, 10); 
         bulletGraphics.destroy();
     }
@@ -39,8 +39,8 @@ class GameScene extends Phaser.Scene {
         this.nextFire = 0;   // 次に弾を発射できる時間
 
         // プレイヤーを配置
-        this.player = this.physics.add.sprite(400, 550, 'player');
-        this.player.setScale(0.5).refreshBody();
+        this.player = this.physics.add.sprite(240, 300, 'player');
+        this.player.setScale(0.4).refreshBody();
 
         this.player.body.setCircle(this.player.displayWidth / 2);
 
@@ -131,7 +131,7 @@ class GameScene extends Phaser.Scene {
             const y = -20;
 
             enemy.setPosition(x, y);
-            enemy.setScale(0.5);
+            enemy.setScale(0.4);
             enemy.refreshBody();
 
             const radius = enemy.displayWidth / 2;
