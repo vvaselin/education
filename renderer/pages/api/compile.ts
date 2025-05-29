@@ -5,6 +5,9 @@ import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -15,9 +18,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'C++ code is required.' });
   }
 
-  // --- ★★★ 新しいアプローチ ★★★ ---
-  // ご自身のPCのemsdkフォルダへの絶対パスを指定します。
-  const emsdkPath = "C:\\Users\\rinwa\\Desktop\\programing\\emsdk"; 
+  const emsdkPath = process.env.EMSDK_PATH;
+
+  // 環境変数が設定されていない場合にエラーを出す
+  if (!emsdkPath) {
+    // サーバーのコンソールにエラーを表示
+    console.error('サーバー環境変数エラー: EMSDK_PATHが設定されていません。.env.localファイルを確認してください。');
+    // クライアント（ブラウザ）にエラー内容を返す
+    return res.status(500).json({ 
+      error: 'サーバー環境変数エラー: EMSDK_PATHが設定されていません。.env.localファイルを確認してください。' 
+    });
+  }
+
   const emsdkEnvScript = path.join(emsdkPath, 'emsdk_env.bat');
 
   const tempDir = path.join(process.cwd(), 'temp_compile');

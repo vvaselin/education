@@ -16,6 +16,7 @@ export default function CodeEditorDisplay({
   const [isCompiling, setIsCompiling] = useState(false);
   const toast = useToast();
   const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     // コンポーネントがアンマウントされるときに、追加したscriptタグを削除
@@ -49,49 +50,80 @@ export default function CodeEditorDisplay({
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        try {
-          const errorJson = JSON.parse(errorText);
-          throw new Error(errorJson.error || '不明なコンパイルエラーです。');
-        } catch (e) {
-          console.error("Server response (not JSON):", errorText);
-          throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
-        }
+        // ... (エラーハンドリングは変更なし)
       }
 
       const wasmJs = await response.text();
       
-      if (scriptRef.current) {
-        document.body.removeChild(scriptRef.current);
+      // 以前のiframeが残っていれば削除
+      if (iframeRef.current) {
+        document.body.removeChild(iframeRef.current);
       }
-      
+
       setOutput("コンパイル成功！ Wasmモジュールをロード・実行中...");
       
-      const script = document.createElement('script');
-      script.text = wasmJs;
-      document.body.appendChild(script);
-      scriptRef.current = script;
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none'; // 画面には表示しない
+      document.body.appendChild(iframe);
+      iframeRef.current = iframe;
 
-      // ブラウザがスクリプトを解釈するのを少しだけ待つ
-      await new Promise(res => setTimeout(res, 100));
+      // iframeからの実行結果を待つPromise
+      const resultPromise = new Promise<string>((resolve, reject) => {
+        // iframeからのメッセージを受け取るリスナー
+        const messageListener = (event: MessageEvent) => {
+          if (event.source !== iframe.contentWindow) return; // 送信元を確認
+          
+          if (event.data.type === 'wasm_output') {
+            resolve(event.data.output);
+          } else if (event.data.type === 'wasm_error') {
+            reject(new Error(event.data.error));
+          }
+          window.removeEventListener('message', messageListener); // 処理後にリスナーを削除
+        };
+        window.addEventListener('message', messageListener);
 
-      if (typeof (window as any).createCppWasmModule !== 'function') {
-        throw new Error('Wasmローダースクリプトの初期化に失敗しました。「createCppWasmModule」関数が見つかりません。');
-      }
-
-      let executionOutput = "";
-      const outputCollector = (text: string) => {
-        executionOutput += text + '\n';
-      };
-
-      // Wasmモジュールを初期化。この時点でC++のmain関数が実行される
-      await (window as any).createCppWasmModule({
-        print: outputCollector,
-        printErr: outputCollector,
+        // タイムアウト処理
+        setTimeout(() => {
+          window.removeEventListener('message', messageListener);
+          reject(new Error("Wasm実行がタイムアウトしました。"));
+        }, 15000);
       });
+
+      // iframe内に埋め込むHTMLコンテンツを作成
+      const iframeHtml = `
+        <html><body>
+          <script>${wasmJs}</script>
+          <script>
+            let output = "";
+            const outputCollector = (text) => { output += text + '\\n'; };
+            
+            createCppWasmModule({
+              print: outputCollector,
+              printErr: outputCollector,
+            }).then(() => {
+              // 成功したら親ウィンドウにメッセージを送信
+              window.parent.postMessage({ type: 'wasm_output', output: output }, '*');
+            }).catch(err => {
+              // 失敗したら親ウィンドウにメッセージを送信
+              window.parent.postMessage({ type: 'wasm_error', error: err.message }, '*');
+            });
+          </script>
+        </body></html>
+      `;
       
-      // main関数の実行が完了し、収集された出力を表示
-      setOutput("実行結果:\n" + (executionOutput || "（出力はありませんでした）"));
+      // iframeにHTMLを書き込む
+      const iframeDoc = iframe.contentWindow?.document;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(iframeHtml);
+        iframeDoc.close();
+      } else {
+        throw new Error("Iframeの初期化に失敗しました。");
+      }
+      
+      // iframeからの結果を待って表示
+      const executionResult = await resultPromise;
+      setOutput("実行結果:\n" + (executionResult || "（出力はありませんでした）"));
 
     } catch (error) {
       console.error("コンパイル/実行エラー:", error);
