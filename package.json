@@ -15,7 +15,8 @@
     "@monaco-editor/react": "^4.7.0",
     "electron-serve": "^1.3.0",
     "electron-store": "^8.2.0",
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@chakra-ui/icons": "^2.1.1",

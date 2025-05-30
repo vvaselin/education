@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Box, Button, VStack, Text, useToast } from '@chakra-ui/react';
+import {
+  Box, Button, VStack, Text, useToast,
+  Tabs, TabList, Tab, TabPanels, TabPanel, Flex
+} from '@chakra-ui/react';
+import { VscTerminalPowershell } from 'react-icons/vsc';
 
 interface CodeEditorDisplayProps {
   initialCode?: string;
@@ -50,12 +54,18 @@ export default function CodeEditorDisplay({
       });
 
       if (!response.ok) {
-        // ... (エラーハンドリングは変更なし)
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || '不明なコンパイルエラーです。');
+        } catch (e) {
+          console.error("Server response (not JSON):", errorText);
+          throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
+        }
       }
 
       const wasmJs = await response.text();
       
-      // 以前のiframeが残っていれば削除
       if (iframeRef.current) {
         document.body.removeChild(iframeRef.current);
       }
@@ -63,33 +73,28 @@ export default function CodeEditorDisplay({
       setOutput("コンパイル成功！ Wasmモジュールをロード・実行中...");
       
       const iframe = document.createElement('iframe');
-      iframe.style.display = 'none'; // 画面には表示しない
+      iframe.style.display = 'none';
       document.body.appendChild(iframe);
       iframeRef.current = iframe;
 
-      // iframeからの実行結果を待つPromise
       const resultPromise = new Promise<string>((resolve, reject) => {
-        // iframeからのメッセージを受け取るリスナー
         const messageListener = (event: MessageEvent) => {
-          if (event.source !== iframe.contentWindow) return; // 送信元を確認
-          
+          if (event.source !== iframe.contentWindow) return;
           if (event.data.type === 'wasm_output') {
             resolve(event.data.output);
           } else if (event.data.type === 'wasm_error') {
             reject(new Error(event.data.error));
           }
-          window.removeEventListener('message', messageListener); // 処理後にリスナーを削除
+          window.removeEventListener('message', messageListener);
         };
         window.addEventListener('message', messageListener);
 
-        // タイムアウト処理
         setTimeout(() => {
           window.removeEventListener('message', messageListener);
           reject(new Error("Wasm実行がタイムアウトしました。"));
         }, 15000);
       });
 
-      // iframe内に埋め込むHTMLコンテンツを作成
       const iframeHtml = `
         <html><body>
           <script>${wasmJs}</script>
@@ -101,27 +106,16 @@ export default function CodeEditorDisplay({
               print: outputCollector,
               printErr: outputCollector,
             }).then(() => {
-              // 成功したら親ウィンドウにメッセージを送信
               window.parent.postMessage({ type: 'wasm_output', output: output }, '*');
             }).catch(err => {
-              // 失敗したら親ウィンドウにメッセージを送信
               window.parent.postMessage({ type: 'wasm_error', error: err.message }, '*');
             });
           </script>
         </body></html>
       `;
       
-      // iframeにHTMLを書き込む
-      const iframeDoc = iframe.contentWindow?.document;
-      if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(iframeHtml);
-        iframeDoc.close();
-      } else {
-        throw new Error("Iframeの初期化に失敗しました。");
-      }
+      iframe.srcdoc = iframeHtml;
       
-      // iframeからの結果を待って表示
       const executionResult = await resultPromise;
       setOutput("実行結果:\n" + (executionResult || "（出力はありませんでした）"));
 
@@ -142,44 +136,63 @@ export default function CodeEditorDisplay({
 
   return (
     <Box flex="3.5" height="100%" display="flex" flexDirection="column" bg="gray.800" minWidth="0">
-      <Editor
-        height="70%"
-        language={language}
-        theme="vs-dark"
-        value={code}
-        onChange={handleEditorChange}
-        options={{
-          selectOnLineNumbers: true,
-          minimap: { enabled: true },
-          fontSize: 18,
-          wordWrap: 'on',
-        }}
-      />
-      <VStack p={2} spacing={2}>
-        <Button
-          colorScheme="green"
-          onClick={handleRunCode}
-          width="100%"
-          isLoading={isCompiling}
-          loadingText="コンパイル中..."
-        >
-          コードを実行 (Wasm)
-        </Button>
-        <Box
-          width="100%"
-          height="100%"
-          bg="gray.900"
-          p={2}
-          rounded="md"
-          overflowY="auto"
-          fontSize="sm"
-          whiteSpace="pre-wrap"
-          fontFamily="monospace"
-          color="white"
-        >
-          <Text as="pre">{output}</Text>
-        </Box>
-      </VStack>
+      <Tabs variant="enclosed-colored" colorScheme="gray" display="flex" flexDirection="column" flex="1" minHeight="0">
+        
+        {/* タブのヘッダー部分 */}
+        <TabList>
+          <Tab _selected={{ color: 'white', bg: 'gray.800' }}>
+            <Flex align="center">
+              <Box as={VscTerminalPowershell} color="blue.300" mr={2} /> {/* アイコン */}
+              <Text>main.cpp</Text> {/* ファイル名 */}
+            </Flex>
+          </Tab>
+        </TabList>
+
+        {/* タブのコンテンツ部分 */}
+        <TabPanels bg="gray.800" flex="1" display="flex" flexDirection="column" minHeight="0">
+          <TabPanel p={0} flex="1" display="flex" flexDirection="column" minHeight="0">
+
+            {/* Editor本体 (高さを親要素に合わせるためBoxで囲む) */}
+            <Box flex="1" minHeight="0">
+              <Editor
+                height="100%"
+                language={"cpp"}
+                theme="vs-dark"
+                value={code}
+                onChange={handleEditorChange}
+                options={{
+                  selectOnLineNumbers: true,
+                  minimap: { enabled: true },
+                  fontSize: 17,
+                  wordWrap: 'on',
+                }}
+              />
+            </Box>
+
+            {/* ボタンと実行結果エリア */}
+            <VStack p={2} spacing={2} bg="gray.800">
+              <Button colorScheme="green" onClick={handleRunCode} width="100%" isLoading={isCompiling}>
+                コードを実行 (Wasm)
+              </Button>
+              <Box
+                width="100%"
+                height="120px"
+                bg="gray.900"
+                p={2}
+                rounded="md"
+                overflowY="auto"
+                fontSize="sm"
+                whiteSpace="pre-wrap"
+                fontFamily="monospace"
+                color="white"
+              >
+                <Text as="pre">{output}</Text>
+              </Box>
+            </VStack>
+
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 }
