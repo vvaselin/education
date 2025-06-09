@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import DiscordChat from './DiscordChat';
 import CodeEditorDisplay from './CodeEditorDisplay';
+import NovelView from '../components/NovelView';
 
 import { 
   Box, 
@@ -27,6 +28,12 @@ export default function HomePage() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const initialModalRef = useRef(null);
+  const [isNovelMode, setIsNovelMode] = useState(false);
+
+  const sampleScript = [
+    { character: '博士', text: '一日教えたことちゃんと覚えてるか確認じゃ', sprite: '/images/expert.png' },
+    { character: '博士', text: 'const T& の主な目的として正しいものはどれじゃ？', sprite: '/images/expert.png' },
+  ];
 
   return (
     <>
@@ -69,6 +76,9 @@ export default function HomePage() {
             overflow="hidden"
           >
             <DiscordChat />
+            <Button colorScheme="purple" onClick={() => setIsNovelMode(true)} mt={2}>
+              ノベルパート開始
+            </Button>
             <Button colorScheme="orange" onClick={onOpen}>
               ゲームで遊ぶ！
             </Button>
@@ -93,6 +103,13 @@ export default function HomePage() {
             </ModalBody>
         </ModalContent>
       </Modal>
+
+      {isNovelMode && (
+        <NovelView 
+          script={sampleScript} 
+          onClose={() => setIsNovelMode(false)} 
+        />
+      )}
     </>
   );
 }
