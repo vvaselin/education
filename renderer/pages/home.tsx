@@ -31,7 +31,7 @@ export default function HomePage() {
   const [isNovelMode, setIsNovelMode] = useState(false);
 
   const sampleScript = [
-    { character: '博士', text: '一日教えたことちゃんと覚えてるか確認じゃ', sprite: '/images/expert.png' },
+    { character: '博士', text: '一旦教えたことちゃんと覚えてるか確認じゃ', sprite: '/images/expert.png' },
     { character: '博士', text: 'const T& の主な目的として正しいものはどれじゃ？', sprite: '/images/expert.png' },
   ];
 
@@ -76,12 +76,16 @@ export default function HomePage() {
             overflow="hidden"
           >
             <DiscordChat />
+            
+            {/*
             <Button colorScheme="purple" onClick={() => setIsNovelMode(true)} mt={2}>
               ノベルパート開始
             </Button>
             <Button colorScheme="orange" onClick={onOpen}>
               ゲームで遊ぶ！
             </Button>
+            */}
+
           </Box>
         </Flex>
       </Box>

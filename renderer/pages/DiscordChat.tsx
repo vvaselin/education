@@ -44,19 +44,54 @@ export default function DiscordChat() {
     setInputValue(e.target.value);
   };
 
-  const handleSendMessage = () => {
+  const sendMessageToApi = async (question: string) => {
+    try {
+      const res = await fetch("http://localhost:8000/rag", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: question }),
+        mode: "cors",
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      return data.answer;  // FastAPIのレスポンスは { answer: "..." } のはず
+    } catch (error) {
+      console.error('API通信エラー:', error);
+      return '通信エラーが発生しました';
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
 
-    const newMessage: Message = {
-      id: String(Date.now()), // 簡単なユニークID
+    // 自分のメッセージを追加
+    const userMessage: Message = {
+      id: String(Date.now()),
       text: inputValue,
-      user: 'You', // とりあえず自分のメッセージとして送信
-      avatar: '/images/beginner.png', // 自分のアバター
+      user: 'You',
+      avatar: '/images/beginner.png',
     };
+    setMessages((prev) => [...prev, userMessage]);
+    const question = inputValue;
+    setInputValue('');
 
-    setMessages([...messages, newMessage]);
-    setInputValue(''); // 入力欄をクリア
+    // APIへ送信してAIの応答を取得
+    const aiAnswer = await sendMessageToApi(question);
+
+    // AIのメッセージを追加
+    const aiMessage: Message = {
+      id: String(Date.now() + 1),
+      text: aiAnswer,
+      user: 'AI Bot',
+      avatar: '/images/expert.png',
+    };
+    setMessages((prev) => [...prev, aiMessage]);
   };
+
 
   return (
     <Flex 
