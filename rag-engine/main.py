@@ -19,7 +19,7 @@ app = FastAPI()
 # (CORS設定は省略)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8888"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,6 +65,11 @@ qa_chain = RetrievalQA.from_chain_type(
 # (入力スキーマとエンドポイント部分は省略)
 class Message(BaseModel):
     message: str
+
+@app.get("/health")
+async def health_check():
+    """サーバーが正常に起動しているか確認するためのエンドポイント"""
+    return {"status": "ok"}
 
 @app.post("/rag")
 async def rag_chat(data: Message):

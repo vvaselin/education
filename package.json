@@ -6,12 +6,10 @@
   "author": "Ketan Patel <ktan.p.patel@gmail.com>",
   "main": "app/background.js",
   "scripts": {
-    "dev:nextron": "nextron dev",
-    "dev:fastapi": "cd rag-engine && .\\.venv\\Scripts\\activate && uvicorn main:app --reload --port 8000",
-    "dev": "concurrently \"npm run dev:nextron\" \"npm run dev:fastapi\"",
+    "dev": "nextron dev",
     "build": "nextron build",
     "postinstall": "electron-builder install-app-deps",
-    "dist": "npm run build && electron-builder"
+    "dist": "yarn build && electron-builder"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

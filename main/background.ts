@@ -1,12 +1,67 @@
 import path from 'path'
-import { app, ipcMain } from 'electron'
+import { app, ipcMain, BrowserWindow } from 'electron'
 import serve from 'electron-serve'
 import { createWindow } from './helpers'
-import fs from 'fs';
-import { exec } from 'child_process';
-import http from 'http';
+import { spawn, exec, ChildProcess } from 'child_process'
+import http from 'http'
+
 
 const isProd = process.env.NODE_ENV === 'production'
+
+let pythonServerProcess: ChildProcess | null = null;
+
+function startPythonServer() {
+  if (isProd) {
+    // 本番環境用のロジック（これは後で実装）
+    const serverPath = path.join(process.resourcesPath, 'fastapi_server.exe');
+    pythonServerProcess = spawn(serverPath);
+  } else {
+    // 開発環境：仮想環境内のpython.exeを直接実行する
+    const pythonExecutable = path.join(app.getAppPath(), 'rag-engine', '.venv', 'Scripts', 'python.exe');
+    const command = `"${pythonExecutable}" -m uvicorn main:app --reload --port 8000`; // 実行するコマンド文字列
+
+    // ★ spawn の代わりに exec を使用
+    pythonServerProcess = exec(command, {
+      cwd: path.join(app.getAppPath(), 'rag-engine'), // 実行ディレクトリを指定
+    }, (error, stdout, stderr) => {
+      // exec はプロセス終了時に一度だけコールバックされる
+      if (error) {
+        console.error(`exec error: ${error}`);
+        return;
+      }
+    });
+  }
+
+  // stdout（標準出力）とstderr（標準エラー出力）をリアルタイムでコンソールに表示
+  if (pythonServerProcess) {
+    pythonServerProcess.stdout?.on('data', (data) => {
+      console.log(`Python Server: ${data.toString()}`);
+    });
+    pythonServerProcess.stderr?.on('data', (data) => {
+      console.error(`Python Server Stderr: ${data.toString()}`);
+    });
+    pythonServerProcess.on('close', (code) => {
+      console.log(`Python server process exited with code ${code}`);
+    });
+  }
+}
+
+// ★ ヘルスチェックと通知を行う関数
+function checkServerAndNotify(window: BrowserWindow) {
+  const healthCheckUrl = 'http://localhost:8000/health';
+  const interval = setInterval(async () => { // asyncを追加
+    try { // tryを追加
+      const res = await fetch(healthCheckUrl); // awaitを追加
+      if (res.ok) {
+        console.log('FastAPI server is ready!');
+        window.webContents.send('fastapi-ready');
+        clearInterval(interval);
+      }
+    } catch (e) {
+      console.log('Waiting for FastAPI server...');
+    }
+  }, 2000);
+}
 
 if (isProd) {
   serve({ directory: 'app' })
@@ -17,6 +72,8 @@ if (isProd) {
 ;(async () => {
   await app.whenReady()
 
+  startPythonServer();
+
   const mainWindow = createWindow('main', {
     width: 1280,
     height: 720,
@@ -26,6 +83,8 @@ if (isProd) {
       preload: path.join(__dirname, 'preload.js'),
     },
   })
+
+  checkServerAndNotify(mainWindow);
 
   if (isProd) {
     await mainWindow.loadURL('app://./home')
