@@ -5,7 +5,8 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain.prompts import PromptTemplate
 import os
@@ -54,12 +55,18 @@ PROMPT = PromptTemplate(
 )
 
 # 6. RAGチェーンの作成
-qa_chain = RetrievalQA.from_chain_type(
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key='answer'
+)
+
+qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
-    chain_type="stuff",
     retriever=retriever,
-    chain_type_kwargs={"prompt": PROMPT},
-    return_source_documents=False
+    memory=memory,
+    combine_docs_chain_kwargs={"prompt": PROMPT},
+    verbose=True 
 )
 
 # (入力スキーマとエンドポイント部分は省略)
