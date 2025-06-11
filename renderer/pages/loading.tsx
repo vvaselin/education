@@ -22,7 +22,6 @@ export default function LoadingPage() {
     };
   }, [router]); // routerを依存配列に追加
 
-  // 表示内容は変更なし
   return (
     <Center 
       width="100vw" 
