@@ -49,13 +49,15 @@ function startPythonServer() {
 // ★ ヘルスチェックと通知を行う関数
 function checkServerAndNotify(window: BrowserWindow) {
   const healthCheckUrl = 'http://localhost:8000/health';
-  const interval = setInterval(async () => { // asyncを追加
-    try { // tryを追加
-      const res = await fetch(healthCheckUrl); // awaitを追加
+
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(healthCheckUrl);
       if (res.ok) {
         console.log('FastAPI server is ready!');
+        // ★ サーバー準備完了をレンダラープロセスに通知するだけ
         window.webContents.send('fastapi-ready');
-        clearInterval(interval);
+        clearInterval(interval); // チェックを停止
       }
     } catch (e) {
       console.log('Waiting for FastAPI server...');
@@ -90,48 +92,18 @@ if (isProd) {
     await mainWindow.loadURL('app://./home')
   } else {
     const port = process.argv[2];
-    const url = `http://localhost:${port}/home`;
+    const loadingUrl = `http://localhost:${port}/loading`; // ★ 最初にloadingページを読み込む
 
-    // サーバーが準備完了するまで待機する関数
-    const waitForServer = async () => {
-      for (let i = 0; i < 60; i++) { // 最大60秒待つ
-        try {
-          // Promiseを使ってhttp.getを非同期処理にする
-          await new Promise((resolve, reject) => {
-            http.get(url, (res) => {
-              // ステータスコードが200なら成功
-              if (res.statusCode === 200) {
-                resolve(res.statusCode);
-              } else {
-                reject(new Error(`サーバーエラー: ${res.statusCode}`));
-              }
-            }).on('error', (err) => reject(err));
-          });
-          // 成功したらループを抜ける
-          console.log('Next.js server is ready!');
-          return;
-        } catch (error) {
-          console.log('Next.js server not ready yet. Retrying in 1s...');
-          // 1秒待ってからリトライ
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-      // タイムアウトした場合
-      throw new Error('Timed out waiting for Next.js server.');
-    };
-
+    // Next.jsサーバーの準備を待つ (元のコードにあったもの)
     try {
-      // サーバーの準備を待つ
-      await waitForServer();
-      // 準備ができたらURLを読み込む
-      await mainWindow.loadURL(url);
+      await mainWindow.webContents.loadURL(loadingUrl);
     } catch (e) {
-      console.error(e);
-      // ここでエラーページをロードしたり、アプリを終了させたりすることも可能
+      console.error(e)
     }
-    // 開発ツールを開く
-    mainWindow.webContents.openDevTools()
   }
+  
+  // ★ ヘルスチェックを開始
+  checkServerAndNotify(mainWindow);
 })()
 
 app.on('window-all-closed', () => {

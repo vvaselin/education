@@ -28,17 +28,14 @@ const initialMessages: Message[] = [
 export default function DiscordChat() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
-
-  // ★ 1. ローディング状態を管理するstateを追加
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   // メッセージが追加されたら、一番下にスクロールする関数
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  useEffect(scrollToBottom, [messages, isLoading]); // ★ isLoadingも依存配列に追加
+  useEffect(scrollToBottom, [messages, isLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -59,7 +56,6 @@ export default function DiscordChat() {
     return data.response;
   };
 
-  // ★ 2. handleSendMessage関数を修正
   const handleSendMessage = async () => {
     if (inputValue.trim() === '' || isLoading) return; // 送信中なら何もしない
 
@@ -97,7 +93,6 @@ export default function DiscordChat() {
       setIsLoading(false); // ★ ローディング終了（成功・失敗問わず）
     }
   };
-
 
   return (
     <Flex direction="column" flex="1" minHeight="0" bg="gray.700" color="white" rounded="md">
