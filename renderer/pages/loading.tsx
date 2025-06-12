@@ -1,26 +1,22 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/router'; // ★ useRouterをインポート
+import { useRouter } from 'next/router';
 import { Center, Spinner, Text, VStack } from '@chakra-ui/react';
 
 export default function LoadingPage() {
-  const router = useRouter(); // ★ ルーターを取得
+  const router = useRouter();
 
-  // ★ メインプロセスからの通知を待つuseEffect
   useEffect(() => {
-    // window.ipc は preload.ts で定義されたもの
+    // メインプロセスからの 'fastapi-ready' 通知を待つ
     const unlisten = window.ipc.on('fastapi-ready', () => {
       console.log('Received fastapi-ready signal, navigating to /home');
-      // ★ 準備完了の合図を受け取ったら/homeにページ遷移
+      // 準備完了の合図を受け取ったら/homeにページ遷移
       router.push('/home');
     });
 
-    // コンポーネントがアンマウントされる時にリスナーを解除
     return () => {
-      if (unlisten) {
-        unlisten();
-      }
+      if (unlisten) unlisten();
     };
-  }, [router]); // routerを依存配列に追加
+  }, [router]);
 
   return (
     <Center 

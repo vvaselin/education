@@ -8,7 +8,7 @@ import {
   Input,
   Button,
   Flex,
-  Spinner, // ★ スピナーを使う場合（今回はButtonのisLoadingに内蔵）
+  Spinner,
 } from '@chakra-ui/react';
 
 // メッセージの型を定義
@@ -26,12 +26,45 @@ const initialMessages: Message[] = [
 ];
 
 export default function DiscordChat() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-  // メッセージが追加されたら、一番下にスクロールする関数
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/history");
+        if (!res.ok) {
+          throw new Error('Failed to fetch history');
+        }
+        const data = await res.json();
+        
+        // ★ APIからの返り値(data.history)が配列であることを必ず確認する
+        if (Array.isArray(data.history)) {
+          // 履歴が空でなければそれをセット
+          if (data.history.length > 0) {
+            setMessages(data.history);
+          } else {
+            // 履歴が空なら初期メッセージをセット
+            setMessages(initialMessages);
+          }
+        } else {
+          // 予期せぬ形式のデータが返ってきた場合も初期メッセージをセット
+          console.error("Fetched history is not an array:", data);
+          setMessages(initialMessages);
+        }
+
+      } catch (error) {
+        console.error("Could not fetch chat history:", error);
+        // エラー時も初期メッセージをセット
+        setMessages(initialMessages);
+      }
+    };
+
+    fetchHistory();
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -105,7 +138,7 @@ export default function DiscordChat() {
       {/* メッセージ表示エリア */}
       <Box flex="1" overflowY="auto" p={4} css={{ /* ... スクロールバーのスタイルは変更なし ... */ }}>
         <VStack spacing={4} align="stretch">
-          {messages.map((msg) => (
+          {Array.isArray(messages) && messages.map((msg, index) => (
             // ... メッセージ表示部分は変更なし ...
             <HStack key={msg.id} alignSelf={msg.user === 'You' ? 'flex-end' : 'flex-start'} w="auto" maxWidth="80%">
               {msg.user !== 'You' && <Avatar size="sm" name={msg.user} src={msg.avatar} mr={2} />}
