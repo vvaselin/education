@@ -4,20 +4,11 @@ import serve from 'electron-serve'
 import { createWindow } from './helpers'
 import { exec, ChildProcess } from 'child_process'
 import fs from 'fs'
+import fetch from 'node-fetch'
 
 const isProd = process.env.NODE_ENV === 'production'
 
-if (isProd) {
-  serve({ directory: 'app' })
-} else {
-  app.setPath('userData', `${app.getPath('userData')} (development)`)
-}
-
-// メインの非同期処理
-;(async () => {
-  await app.whenReady()
-
-  // 1. Pythonサーバーを起動する
+function startAndCheckServer(window: BrowserWindow) {
   const projectRoot = app.getAppPath();
   const ragEngineDir = path.join(projectRoot, 'rag-engine');
   const pythonExecutable = path.join(ragEngineDir, '.venv', 'Scripts', 'python.exe');
@@ -25,16 +16,37 @@ if (isProd) {
   if (!isProd && fs.existsSync(pythonExecutable)) {
     const command = `"${pythonExecutable}" -m uvicorn main:app --reload --port 8000`;
     const pythonServerProcess = exec(command, { cwd: ragEngineDir });
-
+    
     pythonServerProcess.stdout?.on('data', (data) => console.log(`Python Server: ${data.toString()}`));
     pythonServerProcess.stderr?.on('data', (data) => console.error(`Python Server Stderr: ${data.toString()}`));
 
-    app.on('will-quit', () => {
-        pythonServerProcess.kill();
-    });
+    app.on('will-quit', () => pythonServerProcess.kill());
   }
 
-  // 2. Electronウィンドウを作成
+  const healthCheckUrl = 'http://localhost:8000/health';
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(healthCheckUrl);
+      if (res.ok) {
+        console.log('FastAPI server is ready!');
+        window.webContents.send('fastapi-ready');
+        clearInterval(interval);
+      }
+    } catch (e) {
+      console.log('Waiting for FastAPI server...');
+    }
+  }, 2000);
+}
+
+if (isProd) {
+  serve({ directory: 'app' })
+} else {
+  app.setPath('userData', `${app.getPath('userData')} (development)`)
+}
+
+;(async () => {
+  await app.whenReady()
+
   const mainWindow = createWindow('main', {
     width: 1280,
     height: 720,
@@ -45,26 +57,39 @@ if (isProd) {
     },
   })
   
-  // 3. 最初にローディングページを表示
   const port = process.argv[2] || 8888;
   const loadingUrl = `http://localhost:${port}/loading`;
-  const homeUrl = `http://localhost:${port}/home`;
-  
   await mainWindow.loadURL(loadingUrl);
 
-  // ★ 4. 単純に8秒待ってからメインページに遷移する
-  console.log("Starting a 8-second timer before navigating to /home...");
-  setTimeout(() => {
-    console.log("Timer finished. Navigating to /home now.");
-    mainWindow.loadURL(homeUrl);
-  }, 8000); // 8000ミリ秒 = 8秒
-
+  startAndCheckServer(mainWindow);
 })()
 
 app.on('window-all-closed', () => {
   app.quit()
 })
 
-ipcMain.on('message', async (event, arg) => {
-  event.reply('message', `${arg} World!`)
-})
+ipcMain.handle('get-history', async () => {
+  try {
+    const res = await fetch('http://localhost:8000/history');
+    if (!res.ok) throw new Error('Failed to fetch history from backend');
+    return res.json();
+  } catch (e) {
+    console.error('Error in get-history handler:', e);
+    return { error: e.message }; // エラー情報を返す
+  }
+});
+
+ipcMain.handle('post-rag', async (event, message: string) => {
+  try {
+    const res = await fetch('http://localhost:8000/rag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: message }),
+    });
+    if (!res.ok) throw new Error('Failed to fetch RAG response from backend');
+    return res.json();
+  } catch (e) {
+    console.error('Error in post-rag handler:', e);
+    return { error: e.message }; // エラー情報を返す
+  }
+});

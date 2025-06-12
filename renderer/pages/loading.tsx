@@ -6,10 +6,8 @@ export default function LoadingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // メインプロセスからの 'fastapi-ready' 通知を待つ
     const unlisten = window.ipc.on('fastapi-ready', () => {
       console.log('Received fastapi-ready signal, navigating to /home');
-      // 準備完了の合図を受け取ったら/homeにページ遷移
       router.push('/home');
     });
 

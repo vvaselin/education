@@ -34,30 +34,17 @@ export default function DiscordChat() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch("http://localhost:8000/history");
-        if (!res.ok) {
-          throw new Error('Failed to fetch history');
-        }
-        const data = await res.json();
-        
-        // ★ APIからの返り値(data.history)が配列であることを必ず確認する
-        if (Array.isArray(data.history)) {
-          // 履歴が空でなければそれをセット
-          if (data.history.length > 0) {
-            setMessages(data.history);
-          } else {
-            // 履歴が空なら初期メッセージをセット
-            setMessages(initialMessages);
-          }
+        const data = await window.ipc.invoke('get-history');
+        if (data.error) throw new Error(data.error);
+
+        if (Array.isArray(data.history) && data.history.length > 0) {
+          setMessages(data.history);
         } else {
-          // 予期せぬ形式のデータが返ってきた場合も初期メッセージをセット
-          console.error("Fetched history is not an array:", data);
           setMessages(initialMessages);
         }
 
       } catch (error) {
         console.error("Could not fetch chat history:", error);
-        // エラー時も初期メッセージをセット
         setMessages(initialMessages);
       }
     };
@@ -75,17 +62,8 @@ export default function DiscordChat() {
   };
 
   const sendMessageToApi = async (question: string) => {
-    const res = await fetch("http://localhost:8000/rag", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: question }),
-      mode: "cors",
-    });
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ response: 'サーバーとの通信でエラーが発生しました。' }));
-      throw new Error(errorData.response || `HTTP error! status: ${res.status}`);
-    }
-    const data = await res.json();
+    const data = await window.ipc.invoke('post-rag', question);
+    if (data.error) throw new Error(data.error);
     return data.response;
   };
 
