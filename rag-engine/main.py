@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
+from starlette.status import HTTP_503_SERVICE_UNAVAILABLE # ★ ステータスコード用に追加
 from pydantic import BaseModel
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
@@ -9,7 +9,8 @@ from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import FileChatMessageHistory
-from langchain_huggingface import HuggingFaceEndpoint
+# from langchain_huggingface import HuggingFaceEndpoint
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 import os
 from dotenv import load_dotenv
@@ -34,12 +35,14 @@ async def startup_event():
     db = FAISS.from_documents(docs, embeddings)
     retriever = db.as_retriever()
 
-    llm = HuggingFaceEndpoint(
-        repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        task="text-generation",
-        max_new_tokens=512,
-        do_sample=False,
-    )
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    
+    #llm = HuggingFaceEndpoint(
+    #    repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    #    task="text-generation",
+    #    max_new_tokens=512,
+    #    do_sample=False,
+    #)
     
     history = FileChatMessageHistory("chat_history.json")
     memory = ConversationBufferMemory(
@@ -80,8 +83,8 @@ app.add_middleware(
 class Message(BaseModel):
     message: str
 
-
 # --- エンドポイント定義 ---
+
 @app.get("/health")
 async def health_check(response: Response):
     """サーバーがリクエストを処理できる状態か確認するエンドポイント"""
@@ -94,10 +97,10 @@ async def health_check(response: Response):
 
 @app.get("/history")
 async def get_history():
+    # ... (変更なし)
     messages = memory.chat_memory.messages
     history_list = []
     for msg in messages:
-        # メッセージオブジェクトにIDがない場合があるため、安全にアクセス
         msg_id = getattr(msg, 'id', None)
         if msg.type == 'human':
             history_list.append({"user": "You", "text": msg.content, "avatar": "/images/beginner.png", "id": msg_id})
