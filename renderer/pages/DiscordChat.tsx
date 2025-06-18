@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
   Box,
   VStack,
@@ -9,6 +10,10 @@ import {
   Button,
   Flex,
   Spinner,
+  Heading,
+  UnorderedList,
+  ListItem,
+  Link
 } from '@chakra-ui/react';
 
 // メッセージの型を定義
@@ -107,21 +112,43 @@ export default function DiscordChat() {
 
   return (
     <Flex direction="column" flex="1" minHeight="0" bg="gray.700" color="white" rounded="md">
-      {/* ... ヘッダー部分は変更なし ... */}
+      {/* ... ヘッダー ... */}
       <HStack p={3} borderBottomWidth="1px" borderColor="gray.600" spacing={3} align="center">
         <Avatar size="sm" name="博士" src="/images/expert.png" />
         <Text fontWeight="bold" fontSize="md">博士</Text>
       </HStack>
 
       {/* メッセージ表示エリア */}
-      <Box flex="1" overflowY="auto" p={4} css={{ /* ... スクロールバーのスタイルは変更なし ... */ }}>
+      <Box flex="1" overflowY="auto" p={4} 
+        css={{
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#808080",
+            borderRadius: "24px",
+          },
+        }}>
         <VStack spacing={4} align="stretch">
           {Array.isArray(messages) && messages.map((msg, index) => (
-            // ... メッセージ表示部分は変更なし ...
             <HStack key={msg.id} alignSelf={msg.user === 'You' ? 'flex-end' : 'flex-start'} w="auto" maxWidth="80%">
               {msg.user !== 'You' && <Avatar size="sm" name={msg.user} src={msg.avatar} mr={2} />}
-              <Box bg={msg.user === 'You' ? 'blue.500' : 'gray.600'} px={3} py={2} rounded="lg" boxShadow="sm">
-                <Text fontSize="sm">{msg.text}</Text>
+              <Box bg="gray.600" px={3} py={2} rounded="lg" boxShadow="sm" color="white">
+                <ReactMarkdown
+                  components={{
+                    h1: ({node, ...props}) => <Heading as="h1" size="lg" my={4} {...props} />,
+                    h2: ({node, ...props}) => <Heading as="h2" size="md" my={3} {...props} />,
+                    p: ({node, ...props}) => <Text my={2} {...props} />,
+                    ul: ({node, ...props}) => <UnorderedList my={2} {...props} />,
+                    li: ({node, ...props}) => <ListItem {...props} />,
+                    a: ({node, ...props}) => <Link color="teal.300" isExternal {...props} />
+                  }}
+                >
+                  {msg.text}
+                </ReactMarkdown>
               </Box>
               {msg.user === 'You' && <Avatar size="sm" name={msg.user} src={msg.avatar} ml={2} />}
             </HStack>
