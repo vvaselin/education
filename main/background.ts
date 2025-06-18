@@ -14,26 +14,66 @@ function startAndCheckServer(window: BrowserWindow) {
   const pythonExecutable = path.join(ragEngineDir, '.venv', 'Scripts', 'python.exe');
 
   if (!isProd && fs.existsSync(pythonExecutable)) {
-    const command = `"${pythonExecutable}" -m uvicorn main:app --reload --port 8000`;
-    const pythonServerProcess = exec(command, { cwd: ragEngineDir });
-    
-    pythonServerProcess.stdout?.on('data', (data) => console.log(`Python Server: ${data.toString()}`));
-    pythonServerProcess.stderr?.on('data', (data) => console.error(`Python Server Stderr: ${data.toString()}`));
+    console.log('Starting Python RAG server...');
+    console.log('Python executable:', pythonExecutable);
+    console.log('Working directory:', ragEngineDir);
 
-    app.on('will-quit', () => pythonServerProcess.kill());
+    const command = `"${pythonExecutable}" -m uvicorn main_qdrant:app --reload --port 8000 --host 0.0.0.0`;
+    const pythonServerProcess = exec(command, {
+      cwd: ragEngineDir,
+      env: { ...process.env, PYTHONPATH: ragEngineDir }
+    });
+
+    pythonServerProcess.stdout?.on('data', (data) => {
+      console.log(`Python Server: ${data.toString().trim()}`);
+    });
+
+    pythonServerProcess.stderr?.on('data', (data) => {
+      const errorMsg = data.toString().trim();
+      // 通常の起動メッセージは無視
+      if (!errorMsg.includes('INFO:') && !errorMsg.includes('Uvicorn running')) {
+        console.error(`Python Server Error: ${errorMsg}`);
+      }
+    });
+
+    pythonServerProcess.on('error', (error) => {
+      console.error('Failed to start Python server:', error);
+    });
+
+    pythonServerProcess.on('exit', (code, signal) => {
+      console.log(`Python server exited with code ${code} and signal ${signal}`);
+    });
+
+    app.on('will-quit', () => {
+      console.log('Killing Python server...');
+      pythonServerProcess.kill();
+    });
+  } else {
+    console.log('Python executable not found or production mode:', pythonExecutable);
   }
 
   const healthCheckUrl = 'http://localhost:8000/health';
+  let retryCount = 0;
+  const maxRetries = 30; // 最大60秒待機
+
   const interval = setInterval(async () => {
     try {
-      const res = await fetch(healthCheckUrl);
+      const res = await fetch(healthCheckUrl, { timeout: 5000 });
       if (res.ok) {
-        console.log('FastAPI server is ready!');
+        const data = await res.json();
+        console.log('FastAPI server is ready!', data);
         window.webContents.send('fastapi-ready');
         clearInterval(interval);
       }
     } catch (e) {
-      console.log('Waiting for FastAPI server...');
+      retryCount++;
+      console.log(`Waiting for FastAPI server... (${retryCount}/${maxRetries})`);
+
+      if (retryCount >= maxRetries) {
+        console.error('FastAPI server failed to start within timeout');
+        clearInterval(interval);
+        window.webContents.send('fastapi-error', 'サーバーの起動に失敗しました');
+      }
     }
   }, 2000);
 }
@@ -44,7 +84,7 @@ if (isProd) {
   app.setPath('userData', `${app.getPath('userData')} (development)`)
 }
 
-;(async () => {
+; (async () => {
   await app.whenReady()
 
   const mainWindow = createWindow('main', {
@@ -56,7 +96,7 @@ if (isProd) {
       preload: path.join(__dirname, 'preload.js'),
     },
   })
-  
+
   const port = process.argv[2] || 8888;
   const loadingUrl = `http://localhost:${port}/loading`;
   await mainWindow.loadURL(loadingUrl);
