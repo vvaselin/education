@@ -12,5 +12,10 @@ next-env.d.ts
 /app
 dist
 
+# Rag-chat
+rag-engine/.venv
+rag-engine/chat_history.json
+rag-engine/intimacy.json
+
 .env*.local
 .env
