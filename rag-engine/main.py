@@ -16,7 +16,7 @@ import qdrant_client
 from langchain_qdrant import Qdrant
 import json
 import os
-import re # ★修正点1: reモジュールをインポート
+import re 
 
 load_dotenv()
 app = FastAPI()
