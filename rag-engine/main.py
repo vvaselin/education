@@ -33,31 +33,6 @@ app.add_middleware(
 app_is_ready = False
 INTIMACY_FILE = "intimacy.json"
 
-def get_intimacy() -> int:
-    """親密度をJSONファイルから読み込む"""
-    try:
-        with open(INTIMACY_FILE, "r") as f:
-            data = json.load(f)
-            return data.get("value", 0)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return 0
-
-def save_intimacy(value: int):
-    """親密度をJSONファイルに書き込む"""
-    with open(INTIMACY_FILE, "w") as f:
-        json.dump({"value": value}, f)
-
-def update_intimacy(message: str):
-    """メッセージ内容に基づいて親密度を更新する"""
-    current_intimacy = get_intimacy()
-    
-    # 簡単なキーワードベースの親密度判定
-    positive_keywords = ["ありがとう", "すごい", "助かる", "面白い", "楽しい"]
-    if any(keyword in message for keyword in positive_keywords):
-        new_intimacy = current_intimacy + 1
-        save_intimacy(new_intimacy)
-        print(f"親密度が {current_intimacy} -> {new_intimacy} に上昇しました。")
-
 @app.on_event("startup")
 async def startup_event():
     global qa_chain, memory, app_is_ready
@@ -128,12 +103,5 @@ async def get_history():
 
 @app.post("/rag")
 async def rag_chat(data: Message):
-    update_intimacy(data.message)
-
     result = qa_chain.invoke({"question": data.message})
     return {"response": result['answer']}
-
-@app.get("/intimacy")
-async def get_intimacy_endpoint():
-    """現在の親密度の値を取得する"""
-    return {"intimacy": get_intimacy()}

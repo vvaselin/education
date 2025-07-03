@@ -32,7 +32,6 @@ def main():
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
             
-            # ★★★★★ ここが最終修正点 ★★★★★
             # ユーザーが特定した正しいコンテナ <main id="main"> を指定する
             main_content = soup.find("main", id="main")
             
