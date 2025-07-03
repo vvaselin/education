@@ -67,7 +67,7 @@ export default function HomePage() {
 
           {/* 右側（チャット画面） */}
           <Box 
-            flex="2.5" 
+            flex="3" 
             p={2}
             height="100%"
             display="flex"
