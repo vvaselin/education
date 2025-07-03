@@ -14,6 +14,10 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 import os
 from dotenv import load_dotenv
+import qdrant_client
+from langchain_qdrant import Qdrant
+import json
+
 
 load_dotenv()
 app = FastAPI()
@@ -27,28 +31,52 @@ app.add_middleware(
 )
 
 app_is_ready = False
+INTIMACY_FILE = "intimacy.json"
+
+def get_intimacy() -> int:
+    """親密度をJSONファイルから読み込む"""
+    try:
+        with open(INTIMACY_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("value", 0)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0
+
+def save_intimacy(value: int):
+    """親密度をJSONファイルに書き込む"""
+    with open(INTIMACY_FILE, "w") as f:
+        json.dump({"value": value}, f)
+
+def update_intimacy(message: str):
+    """メッセージ内容に基づいて親密度を更新する"""
+    current_intimacy = get_intimacy()
+    
+    # 簡単なキーワードベースの親密度判定
+    positive_keywords = ["ありがとう", "すごい", "助かる", "面白い", "楽しい"]
+    if any(keyword in message for keyword in positive_keywords):
+        new_intimacy = current_intimacy + 1
+        save_intimacy(new_intimacy)
+        print(f"親密度が {current_intimacy} -> {new_intimacy} に上昇しました。")
 
 @app.on_event("startup")
 async def startup_event():
     global qa_chain, memory, app_is_ready
-    
-    loader = TextLoader("docs/cpp.txt", encoding="utf-8")
-    documents = loader.load()
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    docs = text_splitter.split_documents(documents)
+
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db = FAISS.from_documents(docs, embeddings)
-    retriever = db.as_retriever()
+
+    client = qdrant_client.QdrantClient(url="http://localhost:6333", prefer_grpc=True)
+
+    vector_store = Qdrant(
+        client=client, 
+        collection_name="cpp_study_db", # create_qdrant_db.pyで指定したコレクション名
+        embeddings=embeddings
+    )
+
+    #db = FAISS.from_documents(docs, embeddings)
+    retriever = vector_store.as_retriever()
 
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-    #llm = HuggingFaceEndpoint(
-    #    repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
-    #    task="text-generation",
-    #    max_new_tokens=512,
-    #    do_sample=False,
-    #)
-    
     history = FileChatMessageHistory("chat_history.json")
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -100,5 +128,12 @@ async def get_history():
 
 @app.post("/rag")
 async def rag_chat(data: Message):
+    update_intimacy(data.message)
+
     result = qa_chain.invoke({"question": data.message})
     return {"response": result['answer']}
+
+@app.get("/intimacy")
+async def get_intimacy_endpoint():
+    """現在の親密度の値を取得する"""
+    return {"intimacy": get_intimacy()}
