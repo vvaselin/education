@@ -32,22 +32,6 @@ app.add_middleware(
 app_is_ready = False
 INTIMACY_FILE = "intimacy.json"
 
-# 親密度を読み込む関数
-def load_intimacy():
-    if os.path.exists(INTIMACY_FILE):
-        with open(INTIMACY_FILE, "r", encoding="utf-8") as f:
-            # ファイルが空の場合の対策
-            content = f.read()
-            if not content:
-                return {"favorability": 0}
-            return json.loads(content)
-    return {"favorability": 0} # 初期値
-
-# 親密度を保存する関数
-def save_intimacy(data):
-    with open(INTIMACY_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
 @app.on_event("startup")
 async def startup_event():
     global qa_chain, memory, app_is_ready, PROMPT
@@ -68,8 +52,7 @@ async def startup_event():
         output_key='answer'
     )
     
-    # ★修正点2: 正しいプロンプトファイルを読み込む
-    with open("prompts/hakase_prompt_intimacy.txt", "r", encoding="utf-8") as f:
+    with open("prompts/tundere_prompt.txt", "r", encoding="utf-8") as f:
         prompt_template = f.read()
 
     PROMPT = PromptTemplate(
@@ -111,40 +94,9 @@ async def get_history():
     return {"history": history_list}
 
 @app.post("/rag")
+
+
+@app.post("/rag")
 async def rag_chat(data: Message):
-    print(">>>>>>>>>>>>>> /rag ENDPOINT WAS CALLED! <<<<<<<<<<<<<<") # デバッグ用
-    
-    intimacy_data = load_intimacy()
-
-    result = qa_chain.invoke({
-        "question": data.message, 
-        "favorability": intimacy_data.get("favorability", 0)
-    })
-    
-    answer = result['answer']
-
-    print("-----------------------------------------")
-    print(f"LLM Raw Answer: {repr(answer)}") 
-    print("-----------------------------------------")
-
-    try:
-        match = re.search(r'{.*}', answer)
-        print(f"Regex Match: {match}")
-        
-        if match:
-            favorability_change_str = match.group(0)
-            print(f"Extracted JSON string: {favorability_change_str}")
-
-            answer = answer.replace(favorability_change_str, "").strip()
-
-            change_data = json.loads(favorability_change_str)
-            change_value = change_data.get("favorability_change", 0)
-
-            intimacy_data["favorability"] += change_value
-            save_intimacy(intimacy_data)
-            
-            print(f"Intimacy changed by: {change_value}, new value: {intimacy_data['favorability']}")
-    except Exception as e:
-        print(f"An error occurred during intimacy processing: {e}")
-
-    return {"response": answer}
+    result = qa_chain.invoke({"question": data.message})
+    return {"response": result['answer']}

@@ -16,6 +16,7 @@ dist
 rag-engine/.venv
 rag-engine/chat_history.json
 rag-engine/intimacy.json
+qdrant_storage
 
 .env*.local
 .env
