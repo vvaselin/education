@@ -32,6 +32,30 @@ app.add_middleware(
 app_is_ready = False
 INTIMACY_FILE = "intimacy.json"
 
+def load_favorability():
+    """好感度を読み込む"""
+    try:
+        with open(INTIMACY_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("favorability", 0)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # ファイルが存在しない場合は初期値0で作成
+        save_favorability(0)
+        return 0
+
+def save_favorability(favorability: int):
+    """好感度を保存する"""
+    data = {"favorability": favorability}
+    with open(INTIMACY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def update_favorability(delta: int):
+    """好感度を更新する（増減値を指定）"""
+    current = load_favorability()
+    new_value = max(0, min(100, current + delta))  # 0-100の範囲に制限
+    save_favorability(new_value)
+    return new_value
+
 @app.on_event("startup")
 async def startup_event():
     global qa_chain, memory, app_is_ready, PROMPT
@@ -73,6 +97,9 @@ async def startup_event():
 class Message(BaseModel):
     message: str
 
+class FavorabilityUpdate(BaseModel):
+    delta: int
+
 @app.get("/health")
 async def health_check(response: Response):
     if app_is_ready:
@@ -94,9 +121,18 @@ async def get_history():
     return {"history": history_list}
 
 @app.post("/rag")
-
-
-@app.post("/rag")
 async def rag_chat(data: Message):
     result = qa_chain.invoke({"question": data.message})
     return {"response": result['answer']}
+
+@app.get("/favorability")
+async def get_favorability():
+    """現在の好感度を取得"""
+    favorability = load_favorability()
+    return {"favorability": favorability}
+
+@app.post("/favorability")
+async def update_favorability_endpoint(data: FavorabilityUpdate):
+    """好感度を更新"""
+    new_favorability = update_favorability(data.delta)
+    return {"favorability": new_favorability}

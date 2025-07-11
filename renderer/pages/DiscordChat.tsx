@@ -34,6 +34,7 @@ export default function DiscordChat() {
   const [messages, setMessages] = useState<Message[]>();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [favorability, setFavorability] = useState(0);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +55,18 @@ export default function DiscordChat() {
       }
     };
 
+    const fetchFavorability = async () => {
+      try {
+        const data = await window.ipc.invoke('get-favorability');
+        if (data.error) throw new Error(data.error);
+        setFavorability(data.favorability);
+      } catch (error) {
+        console.error("Could not fetch favorability:", error);
+      }
+    };
+
     fetchHistory();
+    fetchFavorability();
   }, []);
 
   const scrollToBottom = () => {
@@ -96,6 +108,16 @@ export default function DiscordChat() {
         avatar: '/images/expert.png',
       };
       setMessages((prev) => [...prev, aiMessage]);
+
+      // 好感度を更新（簡単な例：メッセージ送信ごとに+1）
+      try {
+        const favorabilityData = await window.ipc.invoke('update-favorability', 1);
+        if (!favorabilityData.error) {
+          setFavorability(favorabilityData.favorability);
+        }
+      } catch (error) {
+        console.error('好感度更新エラー:', error);
+      }
     } catch (error) {
       console.error('API通信エラー:', error);
       const errorMessage: Message = {
@@ -112,14 +134,20 @@ export default function DiscordChat() {
 
   return (
     <Flex direction="column" flex="1" minHeight="0" bg="gray.700" color="white" rounded="md">
-      {/* ... ヘッダー ... */}
-      <HStack p={3} borderBottomWidth="1px" borderColor="gray.600" spacing={3} align="center">
-        <Avatar size="sm" name="博士" src="/images/expert.png" />
-        <Text fontWeight="bold" fontSize="md">博士</Text>
+      {/* ヘッダー */}
+      <HStack p={3} borderBottomWidth="1px" borderColor="gray.600" spacing={3} align="center" justify="space-between">
+        <HStack spacing={3} align="center">
+          <Avatar size="sm" name="博士" src="/images/expert.png" />
+          <Text fontWeight="bold" fontSize="md">博士</Text>
+        </HStack>
+        <HStack spacing={2} align="center">
+          <Text fontSize="sm" color="gray.300">好感度:</Text>
+          <Text fontWeight="bold" fontSize="md" color="teal.300">{favorability}%</Text>
+        </HStack>
       </HStack>
 
       {/* メッセージ表示エリア */}
-      <Box flex="1" overflowY="auto" p={4} 
+      <Box flex="1" overflowY="auto" p={4}
         css={{
           "&::-webkit-scrollbar": {
             width: "6px",
@@ -139,12 +167,12 @@ export default function DiscordChat() {
               <Box bg="gray.600" px={3} py={2} rounded="lg" boxShadow="sm" color="white">
                 <ReactMarkdown
                   components={{
-                    h1: ({node, ...props}) => <Heading as="h1" size="lg" my={4} {...props} />,
-                    h2: ({node, ...props}) => <Heading as="h2" size="md" my={3} {...props} />,
-                    p: ({node, ...props}) => <Text my={2} {...props} />,
-                    ul: ({node, ...props}) => <UnorderedList my={2} {...props} />,
-                    li: ({node, ...props}) => <ListItem {...props} />,
-                    a: ({node, ...props}) => <Link color="teal.300" isExternal {...props} />
+                    h1: ({ node, ...props }) => <Heading as="h1" size="lg" my={4} {...props} />,
+                    h2: ({ node, ...props }) => <Heading as="h2" size="md" my={3} {...props} />,
+                    p: ({ node, ...props }) => <Text my={2} {...props} />,
+                    ul: ({ node, ...props }) => <UnorderedList my={2} {...props} />,
+                    li: ({ node, ...props }) => <ListItem {...props} />,
+                    a: ({ node, ...props }) => <Link color="teal.300" isExternal {...props} />
                   }}
                 >
                   {msg.text}
@@ -180,7 +208,7 @@ export default function DiscordChat() {
           bg="gray.600"
           borderColor="gray.500"
           _hover={{ borderColor: 'gray.400' }}
-          _focus={{ borderColor: 'teal.300', boxShadow: `0 0 0 1px var(--chakra-colors-teal-300)`}}
+          _focus={{ borderColor: 'teal.300', boxShadow: `0 0 0 1px var(--chakra-colors-teal-300)` }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
