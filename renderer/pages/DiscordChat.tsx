@@ -25,9 +25,9 @@ interface Message {
 }
 
 const initialMessages: Message[] = [
-  { id: '1', text: 'こんにちは、博士じゃよ！ 何かお手伝いできることはあるかな？', user: 'AI Bot', avatar: '/images/expert.png' },
-  { id: '2', text: 'やあ！チャット機能を作ってるんだ！', user: 'You', avatar: '/images/beginner.png' },
-  { id: '3', text: 'それは素晴らしいのう！お手伝いしよう！', user: 'AI Bot', avatar: '/images/expert.png' },
+  { id: '1', text: 'あら、何か用？', user: 'AI Bot', avatar: '/images/girl1.png' },
+  { id: '2', text: 'あぁ、チャット機能を作ってるんだ', user: 'You', avatar: '/images/beginner.png' },
+  { id: '3', text: '仕方ないから手伝ってあげる。', user: 'AI Bot', avatar: '/images/girl1.png' },
 ];
 
 export default function DiscordChat() {
@@ -105,7 +105,7 @@ export default function DiscordChat() {
         id: String(Date.now() + 1),
         text: aiAnswer,
         user: 'AI Bot',
-        avatar: '/images/expert.png',
+        avatar: '/images/girl1.png',
       };
       setMessages((prev) => [...prev, aiMessage]);
 
@@ -137,8 +137,8 @@ export default function DiscordChat() {
       {/* ヘッダー */}
       <HStack p={3} borderBottomWidth="1px" borderColor="gray.600" spacing={3} align="center" justify="space-between">
         <HStack spacing={3} align="center">
-          <Avatar size="sm" name="博士" src="/images/expert.png" />
-          <Text fontWeight="bold" fontSize="md">博士</Text>
+          <Avatar size="sm" name="少女" src="/images/girl1.png" />
+          <Text fontWeight="bold" fontSize="md">少女</Text>
         </HStack>
         <HStack spacing={2} align="center">
           <Text fontSize="sm" color="gray.300">好感度:</Text>
