@@ -23,13 +23,13 @@ class GameScene extends Phaser.Scene {
     preload() {
         // プレイヤーの画像を読み込み
         this.load.image('player', '/images/beginner.png');
-        this.load.image('enemy', '/images/expert.png');
+        this.load.image('enemy', '/images/girl1.png');
 
         // 弾のテクスチャ生成
         const bulletGraphics = this.add.graphics();
         bulletGraphics.fillStyle(0xffffff, 1);
-        bulletGraphics.fillCircle(4, 4, 4); 
-        bulletGraphics.generateTexture('bullet', 10, 10); 
+        bulletGraphics.fillCircle(4, 4, 4);
+        bulletGraphics.generateTexture('bullet', 10, 10);
         bulletGraphics.destroy();
     }
 
@@ -54,13 +54,13 @@ class GameScene extends Phaser.Scene {
         // 弾のグループ
         this.bullets = this.physics.add.group({
             defaultKey: 'bullet',
-            maxSize: 30, 
+            maxSize: 30,
         });
 
         // 敵グループ作成
         this.enemies = this.physics.add.group({
             defaultKey: 'enemy',
-            maxSize: 50, 
+            maxSize: 50,
         });
 
         // spawnEnemiesを呼び出すタイマーイベント
@@ -101,7 +101,7 @@ class GameScene extends Phaser.Scene {
 
                 bullet.setDepth(6);
                 bullet.setVelocityY(-500);
-                
+
                 this.nextFire = time + this.fireRate;
             }
         }
@@ -135,15 +135,15 @@ class GameScene extends Phaser.Scene {
             enemy.refreshBody();
 
             const radius = enemy.displayWidth / 2;
-            const offsetX = 60; 
+            const offsetX = 60;
             const offsetY = 0;
             enemy.body.setCircle(radius, offsetX, offsetY);
-            
+
             enemy.setDepth(5);
-            enemy.body.enable = true; 
+            enemy.body.enable = true;
             enemy.setActive(true);
             enemy.setVisible(true);
-            
+
             enemy.setVelocityY(80);
             enemy.setTint(0xff0000);
         }
@@ -180,10 +180,10 @@ const PhaserGame = () => {
                 scene: [GameScene],
                 backgroundColor: '#2d2d2d',
                 physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { x: 0, y: 0 },
-                }
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { x: 0, y: 0 },
+                    }
                 },
             };
             gameInstance.current = new Phaser.Game(config);

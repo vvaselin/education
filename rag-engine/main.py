@@ -117,7 +117,7 @@ async def get_history():
         if msg.type == 'human':
             history_list.append({"user": "You", "text": msg.content, "avatar": "/images/beginner.png", "id": msg_id})
         elif msg.type == 'ai':
-            history_list.append({"user": "AI Bot", "text": msg.content, "avatar": "/images/expert.png", "id": msg_id})
+            history_list.append({"user": "AI Bot", "text": msg.content, "avatar": "/images/girl1.png", "id": msg_id})
     return {"history": history_list}
 
 @app.post("/rag")

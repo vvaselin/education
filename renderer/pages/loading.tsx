@@ -26,7 +26,7 @@ export default function LoadingPage() {
       <VStack spacing={6}>
         <Spinner size="xl" thickness="4px" color="teal.300" />
         <Text fontSize="2xl" fontWeight="bold">
-          博士を召喚中です...
+          少女を召喚中です...
         </Text>
         <Text fontSize="md" color="gray.400">
           (バックエンドサーバーを起動しています)

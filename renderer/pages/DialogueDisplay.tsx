@@ -57,7 +57,7 @@ export default function DialogueDisplay({
     } else {
       // dialogueIndexes[activeTab] が不正な場合のフォールバック
       console.warn(`Invalid dialogueIndex: ${currentDialogueIndex} for activeTab: ${activeTab}`);
-      currentDialogue = { speaker: '', text: '会話の取得に失敗しました。' }; 
+      currentDialogue = { speaker: '', text: '会話の取得に失敗しました。' };
     }
   } else {
     // currentTabData が取得できない場合のフォールバック
@@ -162,7 +162,7 @@ export default function DialogueDisplay({
             {/* キャラクターたち */}
             <Flex /* ... (キャラクター表示のFlexはそのままコピー) ... */ >
               <Flex direction="column" align="center" position="absolute" left="5px" top={calculateCharacterTopPosition()} transition="top 0.3s ease">
-                <Image src="/images/expert.png" alt="熟練者キャラ" boxSize={imageSize} objectFit="contain" />
+                <Image src="/images/girl1.png" alt="熟練者キャラ" boxSize={imageSize} objectFit="contain" />
                 <Text fontWeight="bold" fontSize="xs">熟練者</Text>
               </Flex>
               <Flex direction="column" align="center" position="absolute" right="5px" top={calculateCharacterTopPosition()} transition="top 0.3s ease">
@@ -172,14 +172,14 @@ export default function DialogueDisplay({
             </Flex>
             <Spacer />
             {/* 吹き出し */}
-            <Box ref={bubbleRef} /* ... (吹き出しのBoxはそのままコピー、ただしtabIndexの条件は削除) ... */ 
-                position="relative" bg="white" p={1} rounded="lg" shadow="sm" width="100%" mx="auto" display="flex" alignItems="center" justifyContent="center"
-                _before={{
-                    content: "''", position: 'absolute', bottom: '100%',
-                    left: currentDialogue?.speaker === 'expert' ? '9%' : '91%', // currentDialogueを使う
-                    transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '10px solid #FFFFFF',
-                }}
-                mb={4}
+            <Box ref={bubbleRef} /* ... (吹き出しのBoxはそのままコピー、ただしtabIndexの条件は削除) ... */
+              position="relative" bg="white" p={1} rounded="lg" shadow="sm" width="100%" mx="auto" display="flex" alignItems="center" justifyContent="center"
+              _before={{
+                content: "''", position: 'absolute', bottom: '100%',
+                left: currentDialogue?.speaker === 'expert' ? '9%' : '91%', // currentDialogueを使う
+                transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '10px solid #FFFFFF',
+              }}
+              mb={4}
             >
               <Text fontSize={fontSize} fontWeight="bold" textAlign="center" whiteSpace="pre-wrap" wordBreak="break-word" p={1}>
                 {currentDialogue?.text || ''}
