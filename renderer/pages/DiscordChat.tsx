@@ -124,7 +124,7 @@ export default function DiscordChat() {
         id: String(Date.now() + 1),
         text: error.message || '不明なエラーが発生しました。',
         user: 'AI Bot',
-        avatar: '/images/expert.png',
+        avatar: '/images/girl1.png',
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -185,7 +185,7 @@ export default function DiscordChat() {
           {/* ★ 3. ローディング中に「思考中...」を表示 */}
           {isLoading && (
             <HStack alignSelf="flex-start" w="auto">
-              <Avatar size="sm" name="AI Bot" src="/images/expert.png" mr={2} />
+              <Avatar size="sm" name="AI Bot" src="/images/girl1.png" mr={2} />
               <Box bg="gray.600" px={3} py={2} rounded="lg" boxShadow="sm">
                 <HStack>
                   <Spinner size="xs" />
