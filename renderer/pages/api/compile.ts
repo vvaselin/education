@@ -6,7 +6,8 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import dotenv from 'dotenv';
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+// .env.localの場所を明示的に指定
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '..', '..', '.env.local') });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,11 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const emsdkPath = process.env.EMSDK_PATH;
 
-  // 環境変数が設定されていない場合にエラーを出す
   if (!emsdkPath) {
-    // サーバーのコンソールにエラーを表示
     console.error('サーバー環境変数エラー: EMSDK_PATHが設定されていません。.env.localファイルを確認してください。');
-    // クライアント（ブラウザ）にエラー内容を返す
     return res.status(500).json({ 
       error: 'サーバー環境変数エラー: EMSDK_PATHが設定されていません。.env.localファイルを確認してください。' 
     });
@@ -32,7 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const emsdkEnvScript = path.join(emsdkPath, 'emsdk_env.bat');
 
-  const tempDir = path.join(process.cwd(), 'temp_compile');
+  // 【修正点1】プロジェクトルートへのパスを正しく修正
+  // /renderer/.next/server/pages/api から5階層上がる
+  const projectRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
+  const tempDir = path.join(projectRoot, 'temp_compile');
+  
   const uniqueId = `code_${Date.now()}`;
   const cppFilePath = path.join(tempDir, `${uniqueId}.cpp`);
   const jsFilePath = path.join(tempDir, `${uniqueId}.js`);
@@ -41,15 +43,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await fs.mkdir(tempDir, { recursive: true });
     await fs.writeFile(cppFilePath, code);
 
-    // emsdk_env.bat を実行してから emcc を実行するコマンドを組み立てます
-    const compileCommand = `emcc "${cppFilePath}" -o "${jsFilePath}" -s MODULARIZE=1 -s EXPORT_NAME="'createCppWasmModule'" -s ENVIRONMENT='web' -s SINGLE_FILE=1`;
-    const fullCommand = `"${emsdkEnvScript}" && ${compileCommand}`;
+    // 【修正点2】コマンドの組み立て方をシンプルで安全な方法に変更
+    // 各パスをダブルクォートで囲み、&& でつなぐ
+    const commandToRun = `"${emsdkEnvScript}" && emcc "${cppFilePath}" -o "${jsFilePath}" -s MODULARIZE=1 -s EXPORT_NAME="'createCppWasmModule'" -s ENVIRONMENT='web' -s SINGLE_FILE=1`;
     
-    console.log('Executing command:', fullCommand);
+    console.log('Executing command:', commandToRun);
 
     await new Promise<void>((resolve, reject) => {
-      // タイムアウトを少し延長 (初回コンパイルは時間がかかるため)
-      exec(fullCommand, { encoding: 'utf8', timeout: 20000 }, (error, stdout, stderr) => {
+      // execがデフォルトで cmd.exe を使うので、コマンドを直接渡す
+      exec(commandToRun, { encoding: 'utf8', timeout: 20000 }, (error, stdout, stderr) => {
         if (error) {
           console.error(`Execution error:`, error);
           const errorMessage = `コンパイルエラー:\n${stderr || error.message}`;
@@ -73,9 +75,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 一時ファイルを削除
     try {
       await fs.unlink(cppFilePath);
-      // statでファイルの存在を確認してからunlink
       if (await fs.stat(jsFilePath).catch(() => false)) {
-          await fs.unlink(jsFilePath);
+        await fs.unlink(jsFilePath);
       }
     } catch (cleanupError) {
       console.error("Failed to cleanup temp files:", cleanupError);
