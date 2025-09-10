@@ -60,7 +60,7 @@ def update_favorability(delta: int):
 async def startup_event():
     global qa_chain, memory, app_is_ready, PROMPT
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    client = qdrant_client.QdrantClient(url="http://localhost:6333", prefer_grpc=True)
+    client = qdrant_client.QdrantClient(url="http://qdrant:6333", prefer_grpc=True)
     vector_store = Qdrant(
         client=client, 
         collection_name="cpp_study_db",
@@ -68,12 +68,13 @@ async def startup_event():
     )
     retriever = vector_store.as_retriever()
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-    history = FileChatMessageHistory("chat_history.json")
+    history = FileChatMessageHistory("chat_history.json", encoding="utf-8")
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         chat_memory=history,
         return_messages=True,
-        output_key='answer'
+        output_key='answer',
+        input_key="question"
     )
     
     with open("prompts/tundere_prompt.txt", "r", encoding="utf-8") as f:
@@ -122,7 +123,11 @@ async def get_history():
 
 @app.post("/rag")
 async def rag_chat(data: Message):
-    result = qa_chain.invoke({"question": data.message})
+    current_favorability = load_favorability()
+    result = qa_chain.invoke({
+        "question": data.message,
+        "favorability": current_favorability 
+    })
     return {"response": result['answer']}
 
 @app.get("/favorability")
